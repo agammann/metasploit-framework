@@ -16,12 +16,15 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host 'Starting Docker Desktop...'
     Start-Process -FilePath (Get-Command docker).Source -ArgumentList @('desktop', 'start') -WindowStyle Hidden | Out-Null
     $dockerReady = $false
-    for ($attempt = 0; $attempt -lt 45; $attempt++) {
+    for ($attempt = 0; $attempt -lt 120; $attempt++) {
         Start-Sleep -Seconds 2
         & docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
             $dockerReady = $true
             break
+        }
+        if (($attempt + 1) % 15 -eq 0) {
+            Write-Host 'Still waiting for Docker Desktop...'
         }
     }
     if (-not $dockerReady) {
