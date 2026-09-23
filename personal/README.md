@@ -1,86 +1,86 @@
 # Personal Metasploit toolkit for Windows
 
-This setup runs the pinned official Metasploit Framework 6.5.5 Docker image and
-PostgreSQL in Docker Desktop. The console inside that image reports `6.5.5-dev`.
-It includes Meterpreter payloads and a command-line toolbox for network, web,
-wireless capture-file, and forensic work. Your Rust CVE Sniffer desktop app can
-also open with the toolkit after a one-time portable install. The Framework and
-database images, source revisions, Python packages, and added Alpine packages
-are pinned. Your database, Framework settings, modules, and shared files persist
-across launches.
+This folder adds a Windows launch setup to the
+[agammann Metasploit Framework fork](https://github.com/agammann/metasploit-framework).
+It runs the pinned official Metasploit Framework 6.5.5 image with PostgreSQL in
+Docker Desktop, adds a command-line toolbox, and opens installed Windows desktop
+companions. The console in that image identifies itself as `6.5.5-dev`.
+Meterpreter payloads are included in Framework. Starting the toolkit does not
+choose a target or start a scan, exploit, listener, or Meterpreter session.
 
-## Launch with one double-click
+Use these tools only on systems you own or have explicit permission to test.
 
-1. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) and use Linux containers.
-2. Double-click **`Launch-Metasploit.cmd`** in this folder. It starts Docker
-   Desktop if needed, builds the toolkit image, starts PostgreSQL, opens a
-   separate Toolbox window, and opens `msfconsole` in the launch window. The
-   first launch can take several minutes.
-3. The console selects your `personal` workspace on startup. Run `version` and
-   `db_status` to check the setup. Installed Wireshark, Burp Suite, and Rust CVE
-   Sniffer desktop apps also open automatically when detected on Windows.
-4. Files in `workspace/` appear in the Toolbox at `/workspace`. Type `exit` to
-   close either console. Double-click **`Stop-Metasploit.cmd`** to stop the
-   Docker services; your data volumes remain intact.
+## Quick start
 
-The database runs while you use the console. Closing `msfconsole` stops its
-temporary container; the database stays up until you use the Stop button.
-Launching again reuses the images and saved data. Start one Metasploit console
-at a time because the configured local port is shared.
+Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+with Linux containers and [Git for Windows](https://git-scm.com/install/windows).
+In PowerShell, clone just this setup from the public fork:
 
-The launcher generates a random database password in the untracked `.env`
-file. Keep it private and retain it if you want to reuse your database volume.
-If the file is lost while the database volume exists, launch stops with a
-recovery message instead of silently making a new password. Restore the
-original `.env` to keep using that database.
-If you deliberately want a separate fresh database, choose a different
-`COMPOSE_PROJECT_NAME` so the old volume remains untouched.
+```powershell
+git clone --depth 1 --filter=blob:none --sparse https://github.com/agammann/metasploit-framework.git
+Set-Location metasploit-framework
+git sparse-checkout set personal
+```
 
-The Docker build context excludes `.env` and your workspace files.
+Open `personal/` in File Explorer and double-click **`Launch-Metasploit.cmd`**.
+On first launch it creates a private local database password, builds the image,
+starts PostgreSQL, opens the Toolbox window, and opens `msfconsole`. It starts
+Docker Desktop if needed. The initial build needs an internet connection and
+can take several minutes. Wireshark, Burp Suite, and Rust CVE Sniffer open only
+when installed.
 
-To change companion startup, copy `companions.example.json` to the ignored
-`companions.local.json`. Set `OpenToolbox`, `OpenWireshark`, `OpenBurpSuite`, or
-`OpenRustCveSniffer` to `false` to skip a window. If auto-detection misses an
-installed desktop app, put its full path in `WiresharkPath`, `BurpSuitePath`,
-or `RustCveSnifferPath` (the last points to `Start Scanner.bat`). Missing apps
-are skipped without blocking Metasploit. The Toolbox can also be opened
-later with `Toolbox.cmd`. The Metasploit startup commands are in
-`personal-startup.rc`; they run after the database connection resource script.
-They create/select the `personal` workspace and display database status using
-Metasploit's [resource script feature](https://docs.rapid7.com/metasploit/resource-scripts/).
+When the Metasploit prompt appears, use these read-only checks:
 
-If you want the two Windows desktop apps, double-click
-`Install-Desktop-Companions.cmd` once. It uses Windows Package Manager to
-install Wireshark and the unified Burp Suite desktop app. Select Community
-Edition in Burp's installer; Professional requires your own license. Review
-installer and license prompts, then restart the Metasploit launcher.
-Wireshark host capture also requires a working Npcap installation.
+```text
+version
+db_status
+workspace
+```
 
-To include [your Rust CVE Sniffer](https://github.com/agammann/rust-cve-sniffer),
-double-click `Install-Rust-Cve-Sniffer.cmd` once. It downloads the pinned
-v0.5.0 portable Windows release, verifies its published SHA-256 checksum, and
-opens the desktop scanner. Later Metasploit launches reopen it automatically.
-`Open-Rust-Cve-Sniffer.cmd` reopens it on its own. The downloaded application
-lives under the ignored `tools/` directory and does not affect the Docker
-image build. The desktop scanner accepts a Rust project or `Cargo.lock`;
-it checks dependencies for known advisories rather than testing a host or
-running an exploit.
+`db_status` should report a PostgreSQL connection, and `workspace` should mark
+`personal` as current. Double-click **`Stop-Metasploit.cmd`** when finished. It
+stops the Metasploit, Toolbox, and database containers while keeping their
+data. Close the separate Windows desktop apps yourself when finished.
 
-## What's included
+### What the buttons do
 
-| Tool | How to use it here |
+| Button | Result |
 | --- | --- |
-| Metasploit Framework and Meterpreter | Open `Launch-Metasploit.cmd`. Meterpreter payloads are part of the pinned Framework image, and the `personal` workspace loads automatically. |
-| Nmap | Available inside the console via `db_nmap` and inside `Toolbox.cmd` as `nmap`. |
-| sqlmap | Available as `sqlmap` inside `Toolbox.cmd`. This installs the CLI; Metasploit's sqlmap plugin needs a separately configured sqlmap API service. |
-| John the Ripper | Available as `john` inside `Toolbox.cmd`. Save input and results under `/workspace` if they need to persist. |
-| THC-Hydra | Available as `hydra` inside `Toolbox.cmd`. It runs only when you invoke it. |
-| TShark | Available as `tshark` inside `Toolbox.cmd` for packet-capture files in `/workspace`. Install the Windows Wireshark app separately for host capture and its Npcap driver. |
-| Nikto | Available as `nikto` inside `Toolbox.cmd` for authorized web-app checks. |
-| Aircrack-ng | Available as `aircrack-ng` inside `Toolbox.cmd` for existing wireless capture files in `/workspace`. Live monitor-mode capture is not provided by Docker Desktop. |
-| Volatility 3 | Available as `vol` inside `Toolbox.cmd` for memory images in `/workspace`. |
-| Sleuth Kit | Forensic commands such as `fls` and `mmls` are available inside `Toolbox.cmd` for disk images in `/workspace`. |
-| Rust CVE Sniffer | After `Install-Rust-Cve-Sniffer.cmd`, its Windows desktop scanner opens with Metasploit. Use `Open-Rust-Cve-Sniffer.cmd` to reopen it; this is a Rust dependency scanner, separate from the container's network tools. |
+| `Launch-Metasploit.cmd` | Checks Docker and the host port, builds or reuses the pinned image, starts the database, opens enabled installed companions, and opens one Metasploit console. A second click while that console runs opens missing companions without creating another console. |
+| `Toolbox.cmd` | Opens a shell in the toolkit image for the bundled command-line tools. Launch Metasploit once first so the image exists. |
+| `Stop-Metasploit.cmd` | Stops the Metasploit console, Toolbox, and database containers. Docker volumes and local files remain. It does not close Windows desktop apps. |
+| `Install-Desktop-Companions.cmd` | Requires Windows Package Manager (`winget`) to install Wireshark and the unified Burp Suite desktop app. Review installer and license prompts; select Community Edition in Burp unless you have a Professional license. Wireshark capture also needs Npcap. |
+| `Install-Rust-Cve-Sniffer.cmd` | Downloads the pinned Windows x64 portable [Rust CVE Sniffer v0.5.0 release](https://github.com/agammann/rust-cve-sniffer/releases/tag/v0.5.0), checks the published archive SHA-256 and bundled binary checksums, and opens its desktop scanner. |
+| `Open-Rust-Cve-Sniffer.cmd` | Opens that portable desktop scanner again after installation. |
+
+[Rust CVE Sniffer](https://github.com/agammann/rust-cve-sniffer), created and
+maintained by `agammann`, audits dependencies in a local Rust project or `Cargo.lock`.
+It is a separate Windows application; it neither scans a network host nor
+imports findings into Metasploit. Its portable release includes `cargo-audit`
+and does not require a local Rust or Cargo installation. It installs under the
+ignored `personal/tools/` directory and does not change the Docker image. The
+v0.5.0 Windows executable is unsigned; review any Windows publisher warning
+against the linked release before opening it.
+
+## Tools and their roles
+
+The pinned container provides Framework and the command-line tools below. The
+Toolbox opens an idle shell; each tool runs only when you invoke it. Rust CVE
+Sniffer is the optional Windows desktop companion described above.
+
+| Tool | Purpose and how it fits |
+| --- | --- |
+| Metasploit Framework and Meterpreter | Framework is the console for modules, workspaces, and results. Meterpreter is a payload family already in the pinned image, available for tests you explicitly configure. |
+| Nmap | Identifies hosts, open ports, and services. Run `nmap` in the Toolbox, or `db_nmap` in Metasploit to save authorized results in its database. |
+| sqlmap | Tests web requests for SQL injection. Run `sqlmap` in the Toolbox; the Metasploit sqlmap plugin additionally needs a separately configured sqlmap API service. |
+| John the Ripper | Audits password hashes offline. Run `john` in the Toolbox and keep input/output files under `/workspace` when you want them to persist. |
+| THC-Hydra | Performs authorized login checks against network services. Run `hydra` in the Toolbox only with a defined test target and credentials. |
+| TShark | Reads and filters packet-capture files under `/workspace`. Windows host capture requires Wireshark and Npcap outside Docker. |
+| Nikto | Checks web-server configuration and known issues. Run `nikto` in the Toolbox against an authorized lab web server. |
+| Aircrack-ng | Analyzes existing wireless capture files under `/workspace`. Docker Desktop does not provide live monitor-mode adapter access here. |
+| Volatility 3 | Analyzes memory images with the `vol` command in the Toolbox. |
+| Sleuth Kit | Analyzes disk images using Toolbox commands such as `fls` and `mmls`. |
+| Rust CVE Sniffer | Optional Windows desktop app for known Rust dependency advisories. Install it separately; it does not add a Metasploit module or database feed. |
 
 To verify that Meterpreter is present without starting a session, run this in
 PowerShell after the first launch:
@@ -93,22 +93,25 @@ docker run --rm personal-metasploit:6.5.5 ./msfvenom -l payloads |
 The pinned image includes `windows/x64/meterpreter/reverse_tcp` and
 `linux/x64/meterpreter/reverse_tcp`, among other variants. The
 [Metasploit payload guide](https://docs.metasploit.com/docs/using-metasploit/basics/how-payloads-work.html)
-explains the payload types. For a first lab session, `workspace -a lab` creates
-a Metasploit workspace. `db_nmap` can record authorized lab scan results there;
-`hosts` and `services` display the imported data.
+explains the payload types. Metasploit's `personal-startup.rc` selects the
+`personal` database workspace at launch. You may create another workspace with
+`workspace -a lab`; `hosts` and `services` display imported results after an
+authorized `db_nmap` run.
 
 ## Other tools from your list
 
-These have different installation or runtime needs. The launch button opens
-Burp Suite and Wireshark when they are installed, but does not install them or
-start the separate services below:
+The container concentrates on tools that work reliably as Linux command-line
+programs with shared files. Desktop GUIs, hardware-dependent capture, separate
+services, and licensed products have different installation or runtime needs.
+The launch button opens Burp Suite and Wireshark when installed, but does not
+install them or start the other services below:
 
 | Tool | Practical setup |
 | --- | --- |
 | Burp Suite | Install the [Windows desktop app](https://portswigger.net/burp/downloads) and choose Community Edition unless you have a Professional license. You can place exported requests or logs in `workspace/` for use with sqlmap. |
 | Hashcat | Install [Hashcat for Windows](https://hashcat.net/hashcat/) for GPU use. Docker Desktop GPU support on Windows has specific [hardware and WSL2 requirements](https://docs.docker.com/desktop/features/gpu/). |
 | Wireshark GUI | Install the [Windows app with Npcap](https://www.wireshark.org/docs/wsug_html_chunked/ChBuildInstallWinInstall.html) for local packet capture; TShark in the toolkit can analyze saved captures. |
-| Armitage | Its [creator repository](https://github.com/rsmudge/armitage) is a historical release. Compatibility with this Framework version has not been validated, so it is not part of the stable launch. |
+| Armitage | Its [creator repository](https://github.com/rsmudge/armitage) is available, but compatibility with this pinned Framework version has not been validated, so it is not part of the launch. |
 | BeEF | A [separate server](https://github.com/beefproject/beef/wiki/Installation) requiring its own credentials and configuration. It is not started by this launcher. |
 | Greenbone/OpenVAS | An [independent multi-container scanner](https://greenbone.github.io/docs/latest/22.4/container/) with significant storage, memory, and feed-loading requirements. Metasploit has an OpenVAS plugin, but it needs an external scanner service. |
 | Sliver | A [separate C2 server](https://github.com/BishopFox/sliver/wiki/Getting-Started) with its own resources and operation configuration. It is not started here. |
@@ -126,29 +129,86 @@ The [Metasploit plugin guide](https://docs.metasploit.com/docs/using-metasploit/
 lists sqlmap and OpenVAS plugins. Installing a CLI or starting this toolkit does
 not connect those external services automatically.
 
-## Get the setup from your fork
+## Where it runs and what persists
 
-Run these commands in PowerShell from a folder where you want the setup:
+Docker Compose starts PostgreSQL as the `db` service and waits for its health
+check before opening the Metasploit console. The console and Toolbox are
+temporary containers built from the same image. The `personal-startup.rc`
+[resource script](https://docs.rapid7.com/metasploit/resource-scripts/) selects
+your `personal` workspace and displays database status. The Toolbox is a shell
+in that image, not a separate Metasploit installation. Burp, Wireshark, and
+Rust CVE Sniffer run on Windows outside Docker.
 
-```powershell
-git clone --depth 1 --filter=blob:none --sparse https://github.com/agammann/metasploit-framework.git
-Set-Location metasploit-framework
-git sparse-checkout set personal
-```
+| Data | Where it stays |
+| --- | --- |
+| PostgreSQL workspaces and results | Named Docker volume `db_data` for this Compose project. |
+| Framework user settings | Named Docker volume `msf_data`, mounted at `/home/msf/.msf4`. |
+| Your Metasploit modules | `personal/modules/`, mounted into Framework's module directory. Follow the layout in [modules/README.md](modules/README.md). |
+| Files shared with the Toolbox | `personal/workspace/` on Windows, mounted at `/workspace` in the containers. Put packet captures, memory/disk images, and results here when you need them across sessions. |
+| Database password | `personal/.env`, generated on first launch and ignored by Git. Keep this file private and back it up with the database volume. |
+| Companion preferences and portable Rust scanner | Ignored `personal/companions.local.json` and `personal/tools/`. |
 
-Open `personal/` in File Explorer and double-click `Launch-Metasploit.cmd`.
-Your own Metasploit modules go in `personal/modules/` using the normal module
-directory layout. Files in `personal/workspace/` are shared with the container
-at `/workspace` and stay on your computer. Database and Framework user data
-live in Docker volumes.
+`Stop-Metasploit.cmd` stops containers but does not remove those volumes or
+files. Closing `msfconsole` alone stops its temporary container; PostgreSQL
+continues running until you use Stop. Docker Compose project names scope the
+volumes, so a test clone can use a distinct `COMPOSE_PROJECT_NAME`. Keep its
+`.env` with the matching database volume. The Docker build context excludes
+`.env`, `workspace/`, and the portable Windows app.
 
-Port 4444 is published on Windows at `127.0.0.1` by default. For an authorized
-lab target on another machine to reach that port, set `MSF_BIND_ADDRESS` in
-`.env` to your Windows host's lab-interface IP and restart the setup. In a
-reverse handler, set `LHOST` to that reachable Windows IP, `LPORT` to `4444`,
-and `ReverseListenerBindAddress` to `0.0.0.0` so the listener binds inside the
-container. Windows Firewall must also allow the incoming lab connection.
+The Dockerfile pins the Framework image digest, added Alpine package versions,
+sqlmap and Nikto source commits, and Volatility 3 package versions. Compose
+pins the PostgreSQL image digest. These pins limit version drift; rebuilding
+still needs the upstream package and source servers. The optional Windows apps
+use their own installers and update schedules.
 
-To upgrade later, update the pinned versions and digests in `Dockerfile` and
-`compose.yaml`, then launch again. Keep the previous Git commit so you can roll
-back if an update breaks your setup.
+### Choose which windows open
+
+Copy `companions.example.json` to `companions.local.json` inside `personal/`.
+Set `OpenToolbox`, `OpenWireshark`, `OpenBurpSuite`, or
+`OpenRustCveSniffer` to `false` to skip an automatic window. Leave a path blank
+for discovery, or set `WiresharkPath` and `BurpSuitePath` to installed `.exe`
+paths and `RustCveSnifferPath` to `Start Scanner.bat`. Missing companions are
+skipped without failing the Metasploit launch. Burp discovery checks Windows
+shortcuts, uninstall entries, and common per-user and machine-wide locations.
+
+### Listener reachability
+
+Only port 4444 is published, on Windows `127.0.0.1` by default. For an
+authorized lab target on another machine to reach that port, set
+`MSF_BIND_ADDRESS` in `.env` to the Windows host's lab-interface IP, then stop
+and relaunch. In a reverse handler, `LHOST` is the reachable Windows IP while
+`ReverseListenerBindAddress` is `0.0.0.0` inside the container; use `LPORT`
+`4444` to match the published port. Windows Firewall must allow the incoming
+lab connection. Docker's
+[published-port documentation](https://docs.docker.com/engine/network/port-publishing/)
+explains the host/container address distinction. Keep the default loopback
+binding unless your lab needs another machine to connect.
+
+## Update and recover
+
+Stop the toolkit before updating. From the cloned repository root, run
+`git pull --ff-only`, then launch again. The sparse checkout stays sparse and
+your ignored `.env`, workspace files, local companion settings, and Docker
+volumes are not part of that pull. Back up the `.env` file together with the
+Compose project's `db_data` volume before changing pinned versions. If you
+maintain a modified fork, change versions and digests in `Dockerfile` and
+`compose.yaml` together and keep the previous commit available for rollback.
+
+| Symptom | What to check |
+| --- | --- |
+| Docker Desktop does not become ready | Open Docker Desktop, select Linux containers with a working WSL 2 backend, wait for the engine, then launch again. |
+| Port 4444 is busy | The launcher stops before opening a new console. Close the other program using that host port, or stop an older toolkit instance, then retry. A different Compose project name alone does not change the host port. |
+| `.env` is missing but an old database volume exists | Restore the original `.env`; the launcher refuses to invent a new password for that existing database. Stop still works without `.env`. |
+| Build or database startup fails | Check the first error in the launch window and verify Docker/network access. With `.env` present, `docker compose -f personal/compose.yaml --project-directory personal logs db` shows database logs. |
+| Toolbox says the image is missing | Run `Launch-Metasploit.cmd` once to build it. |
+| A desktop app does not open | Run its installer button, then relaunch. For a custom location, set the matching path in `companions.local.json`. Wireshark capture also requires Npcap. |
+| The launch button reports an existing console but its window is gone | Use Stop, then Launch to open a fresh console window. |
+
+The buttons were checked on Windows with Docker Desktop on 2026-09-22: a
+no-cache image build, a fresh sparse clone in a path containing spaces, a
+connected PostgreSQL database, the selected `personal` workspace, and an open
+Toolbox. Stop preserved the data volumes. A second launch recovered a workspace
+created in the first run. Rust CVE Sniffer's pinned download, checksum checks,
+version, and desktop window were also checked. No target scans or exploits were
+run. Wireshark and Burp Suite were absent on that test machine, so their actual
+GUI launches remain dependent on each reader's Windows installation.

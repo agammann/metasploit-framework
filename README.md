@@ -1,5 +1,9 @@
 # Metasploit Framework
 
+This fork includes a [Windows Docker Desktop toolkit](personal/README.md) with
+one-click Metasploit launch, a command-line toolbox, optional desktop
+companions, and a guide to installing and using them.
+
 The Metasploit Framework is an open-source tool released under a BSD-style license. For detailed licensing information, refer to the `COPYING` file.
 
 ## Latest Version
