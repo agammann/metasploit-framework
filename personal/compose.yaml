@@ -22,6 +22,14 @@ services:
       context: .
       dockerfile: Dockerfile
     image: personal-metasploit:6.5.5
+    command:
+      - ./msfconsole
+      - -r
+      - docker/msfconsole.rc
+      - -r
+      - /opt/personal-startup.rc
+      - -y
+      - /usr/src/metasploit-framework/config/database.yml
     environment:
       DATABASE_URL: postgres://msf:${MSF_DB_PASSWORD}@db:5432/msf?pool=200&timeout=5
     depends_on:
@@ -33,6 +41,7 @@ services:
       - msf_data:/home/msf/.msf4
       - ./modules:/home/msf/.msf4/modules
       - ./workspace:/workspace
+      - ./personal-startup.rc:/opt/personal-startup.rc:ro
     stdin_open: true
     tty: true
     networks:

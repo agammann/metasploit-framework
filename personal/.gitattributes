@@ -1,1 +1,2 @@
 bin/nikto text eol=lf
+personal-startup.rc text eol=lf

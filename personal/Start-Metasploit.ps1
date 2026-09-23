@@ -55,6 +55,24 @@ Write-Host 'Starting the database...'
 & docker @composeArgs up -d db
 if ($LASTEXITCODE -ne 0) { throw 'Database startup failed.' }
 
+$projectName = if ($env:COMPOSE_PROJECT_NAME) { $env:COMPOSE_PROJECT_NAME } else { 'personal-metasploit' }
+$existingConsole = & docker ps --quiet --filter "label=com.docker.compose.project=$projectName" --filter 'label=personal.metasploit.role=console'
+if ($existingConsole) {
+    Write-Host 'A Metasploit console is already running. Use its existing window.'
+    return
+}
+
+$stopMarker = Join-Path $workspaceDir '.stop-requested'
+Set-Content -LiteralPath $stopMarker -Value 'false' -Encoding ASCII
+& (Join-Path $setupDir 'Start-Companions.ps1')
+
 Write-Host 'Opening Metasploit console. Type exit to close it.'
-& docker @composeArgs run --rm --service-ports msf
-if ($LASTEXITCODE -ne 0) { throw "Metasploit exited with code $LASTEXITCODE." }
+& docker @composeArgs run --rm --service-ports --label personal.metasploit.role=console msf
+if ($LASTEXITCODE -ne 0) {
+    if ((Test-Path -LiteralPath $stopMarker) -and ((Get-Content -LiteralPath $stopMarker -Raw).Trim() -eq 'true')) {
+        Write-Host 'Metasploit stopped by the Stop button.'
+    }
+    else {
+        throw "Metasploit exited with code $LASTEXITCODE."
+    }
+}

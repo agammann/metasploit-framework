@@ -19,5 +19,13 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host 'Opening toolbox. Nmap, sqlmap, John, Hydra, TShark, Nikto, Aircrack-ng, Volatility 3, and Sleuth Kit are available here.'
 Write-Host 'Files in this folder\workspace are available inside the container at /workspace.'
-& docker compose --project-directory $setupDir -f $composeFile run --rm --no-deps msf sh
-if ($LASTEXITCODE -ne 0) { throw "Toolbox exited with code $LASTEXITCODE." }
+& docker compose --project-directory $setupDir -f $composeFile run --rm --no-deps --label personal.metasploit.role=toolbox msf sh
+if ($LASTEXITCODE -ne 0) {
+    $stopMarker = Join-Path $setupDir 'workspace/.stop-requested'
+    if ((Test-Path -LiteralPath $stopMarker) -and ((Get-Content -LiteralPath $stopMarker -Raw).Trim() -eq 'true')) {
+        Write-Host 'Toolbox stopped by the Stop button.'
+    }
+    else {
+        throw "Toolbox exited with code $LASTEXITCODE."
+    }
+}

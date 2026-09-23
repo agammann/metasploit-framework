@@ -1,0 +1,7 @@
+{
+  "OpenToolbox": true,
+  "OpenWireshark": true,
+  "OpenBurpSuite": true,
+  "WiresharkPath": "",
+  "BurpSuitePath": ""
+}

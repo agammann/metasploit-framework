@@ -10,13 +10,15 @@ database, Framework settings, modules, and shared files persist across launches.
 
 1. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) and use Linux containers.
 2. Double-click **`Launch-Metasploit.cmd`** in this folder. It starts Docker
-   Desktop if needed, builds the toolkit image, starts PostgreSQL, and opens
-   `msfconsole` in the same window. The first launch can take several minutes.
-3. At the Metasploit prompt, run `version` and `db_status` to check the setup.
-4. Double-click **`Toolbox.cmd`** when you want a shell with the bundled
-   command-line tools. Files in `workspace/` appear there at `/workspace`.
-5. Type `exit` to close either console. Double-click **`Stop-Metasploit.cmd`**
-   to stop the database; your Docker volumes remain intact.
+   Desktop if needed, builds the toolkit image, starts PostgreSQL, opens a
+   separate Toolbox window, and opens `msfconsole` in the launch window. The
+   first launch can take several minutes.
+3. The console selects your `personal` workspace on startup. Run `version` and
+   `db_status` to check the setup. Installed Wireshark and Burp Suite desktop
+   apps also open automatically when found at their standard Windows paths.
+4. Files in `workspace/` appear in the Toolbox at `/workspace`. Type `exit` to
+   close either console. Double-click **`Stop-Metasploit.cmd`** to stop the
+   Docker services; your data volumes remain intact.
 
 The database runs while you use the console. Closing `msfconsole` stops its
 temporary container; the database stays up until you use the Stop button.
@@ -27,11 +29,27 @@ The launcher generates a random database password in the untracked `.env`
 file. Keep it private and retain it if you want to reuse your database volume.
 The Docker build context excludes `.env` and your workspace files.
 
+To change companion startup, copy `companions.example.json` to the ignored
+`companions.local.json`. Set `OpenToolbox`, `OpenWireshark`, or `OpenBurpSuite`
+to `false` to skip a window. If auto-detection misses an installed desktop
+app, put its full `.exe` path in `WiresharkPath` or `BurpSuitePath`. Missing
+apps are skipped without blocking Metasploit. The Toolbox can also be opened
+later with `Toolbox.cmd`. The Metasploit startup commands are in
+`personal-startup.rc`; they run after the database connection resource script.
+They create/select the `personal` workspace and display database status using
+Metasploit's [resource script feature](https://docs.rapid7.com/metasploit/resource-scripts/).
+
+If you want the two Windows desktop apps, double-click
+`Install-Desktop-Companions.cmd` once. It uses Windows Package Manager to
+install Wireshark and Burp Suite Community Edition and leaves installer and
+license prompts for you to review. Restart the Metasploit launcher afterward.
+Wireshark host capture also requires a working Npcap installation.
+
 ## What's included
 
 | Tool | How to use it here |
 | --- | --- |
-| Metasploit Framework and Meterpreter | Open `Launch-Metasploit.cmd`. Meterpreter payloads are part of the pinned Framework image. |
+| Metasploit Framework and Meterpreter | Open `Launch-Metasploit.cmd`. Meterpreter payloads are part of the pinned Framework image, and the `personal` workspace loads automatically. |
 | Nmap | Available inside the console via `db_nmap` and inside `Toolbox.cmd` as `nmap`. |
 | sqlmap | Available as `sqlmap` inside `Toolbox.cmd`. This installs the CLI; Metasploit's sqlmap plugin needs a separately configured sqlmap API service. |
 | John the Ripper | Available as `john` inside `Toolbox.cmd`. Save input and results under `/workspace` if they need to persist. |
@@ -59,8 +77,9 @@ a Metasploit workspace. `db_nmap` can record authorized lab scan results there;
 
 ## Other tools from your list
 
-These have different installation or runtime needs, so the launch button does
-not claim to start them:
+These have different installation or runtime needs. The launch button opens
+Burp Suite and Wireshark when they are installed, but does not install them or
+start the separate services below:
 
 | Tool | Practical setup |
 | --- | --- |
