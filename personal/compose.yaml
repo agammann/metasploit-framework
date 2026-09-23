@@ -1,0 +1,46 @@
+name: personal-metasploit
+
+services:
+  db:
+    image: postgres:16.15-alpine3.24@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    environment:
+      POSTGRES_DB: msf
+      POSTGRES_USER: msf
+      POSTGRES_PASSWORD: ${MSF_DB_PASSWORD:?Run Start-Metasploit.ps1 first}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U msf -d msf"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - internal
+
+  msf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: personal-metasploit:6.5.5
+    environment:
+      DATABASE_URL: postgres://msf:${MSF_DB_PASSWORD}@db:5432/msf?pool=200&timeout=5
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${MSF_BIND_ADDRESS:-127.0.0.1}:4444:4444"
+    volumes:
+      - msf_data:/home/msf/.msf4
+      - ./modules:/home/msf/.msf4/modules
+      - ./workspace:/workspace
+    stdin_open: true
+    tty: true
+    networks:
+      - internal
+
+volumes:
+  db_data:
+  msf_data:
+
+networks:
+  internal:
