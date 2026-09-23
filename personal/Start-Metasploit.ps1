@@ -33,6 +33,12 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if (-not (Test-Path -LiteralPath $envFile)) {
+    $candidateProject = if ($env:COMPOSE_PROJECT_NAME) { $env:COMPOSE_PROJECT_NAME } else { 'personal-metasploit' }
+    & docker volume inspect "${candidateProject}_db_data" 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        throw "The database for '$candidateProject' still exists, but personal/.env is missing. Restore the original .env file before starting so its database password stays the same."
+    }
+
     $secretBytes = New-Object byte[] 32
     $random = [System.Security.Cryptography.RandomNumberGenerator]::Create()
     try {
@@ -45,6 +51,40 @@ if (-not (Test-Path -LiteralPath $envFile)) {
     Set-Content -LiteralPath $envFile -Value "MSF_DB_PASSWORD=$password" -Encoding ASCII
 }
 
+# Compose must use the password stored beside this setup, even if the caller
+# happens to have an unrelated variable with the same name.
+Remove-Item Env:\MSF_DB_PASSWORD -ErrorAction SilentlyContinue
+$composeConfigJson = & docker @composeArgs config --format json
+if ($LASTEXITCODE -ne 0) { throw 'Metasploit Compose configuration is invalid.' }
+$composeConfig = $composeConfigJson | ConvertFrom-Json
+$projectName = $composeConfig.name
+if (-not $projectName) { throw 'Could not determine the Metasploit Compose project name.' }
+
+$existingConsole = & docker ps --quiet --filter "label=com.docker.compose.project=$projectName" --filter 'label=personal.metasploit.role=console'
+if ($LASTEXITCODE -ne 0) { throw 'Could not inspect running Metasploit consoles.' }
+if ($existingConsole) {
+    & (Join-Path $setupDir 'Start-Companions.ps1') -ProjectName $projectName
+    Write-Host 'A Metasploit console is already running. Use its existing window, or Stop and Launch again if that window was closed.'
+    return
+}
+
+$publishedPort = @($composeConfig.services.msf.ports)[0]
+if (-not $publishedPort -or -not $publishedPort.published) {
+    throw 'Metasploit Compose configuration has no published listener port.'
+}
+$bindAddress = if ($publishedPort.host_ip) { [string]$publishedPort.host_ip } else { '0.0.0.0' }
+try {
+    $bindIp = [System.Net.IPAddress]::Parse($bindAddress)
+    $portProbe = [System.Net.Sockets.TcpListener]::new($bindIp, [int]$publishedPort.published)
+    $portProbe.Start()
+}
+catch {
+    throw "Cannot reserve ${bindAddress}:$($publishedPort.published) for Metasploit. Check MSF_BIND_ADDRESS or stop the program using this port. $($_.Exception.Message)"
+}
+finally {
+    if ($portProbe) { $portProbe.Stop() }
+}
+
 New-Item -ItemType Directory -Force -Path $moduleDir, $workspaceDir | Out-Null
 
 Write-Host 'Building the pinned Metasploit image...'
@@ -55,16 +95,9 @@ Write-Host 'Starting the database...'
 & docker @composeArgs up -d db
 if ($LASTEXITCODE -ne 0) { throw 'Database startup failed.' }
 
-$projectName = if ($env:COMPOSE_PROJECT_NAME) { $env:COMPOSE_PROJECT_NAME } else { 'personal-metasploit' }
-$existingConsole = & docker ps --quiet --filter "label=com.docker.compose.project=$projectName" --filter 'label=personal.metasploit.role=console'
-if ($existingConsole) {
-    Write-Host 'A Metasploit console is already running. Use its existing window.'
-    return
-}
-
 $stopMarker = Join-Path $workspaceDir '.stop-requested'
 Set-Content -LiteralPath $stopMarker -Value 'false' -Encoding ASCII
-& (Join-Path $setupDir 'Start-Companions.ps1')
+& (Join-Path $setupDir 'Start-Companions.ps1') -ProjectName $projectName
 
 Write-Host 'Opening Metasploit console. Type exit to close it.'
 & docker @composeArgs run --rm --service-ports --label personal.metasploit.role=console msf

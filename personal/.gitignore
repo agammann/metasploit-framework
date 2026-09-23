@@ -1,3 +1,4 @@
 .env
 workspace/
 companions.local.json
+tools/

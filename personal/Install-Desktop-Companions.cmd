@@ -11,8 +11,8 @@ echo Installing Wireshark. Review any installer or license prompts.
 winget install --exact --id WiresharkFoundation.Wireshark --source winget
 set "wiresharkResult=%errorlevel%"
 
-echo Installing Burp Suite Community Edition. Review any installer or license prompts.
-winget install --exact --id PortSwigger.BurpSuite.Community --source winget
+echo Installing Burp Suite. Select Community Edition and review any installer or license prompts.
+winget install --exact --id PortSwigger.BurpSuite --source winget
 set "burpResult=%errorlevel%"
 
 if not "%wiresharkResult%"=="0" echo Wireshark installation needs attention.
