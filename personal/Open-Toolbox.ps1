@@ -17,7 +17,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'The toolkit image is missing. Run Launch-Metasploit.cmd first.'
 }
 
-Write-Host 'Opening toolbox. Nmap, sqlmap, John, Hydra, and TShark are available here.'
+Write-Host 'Opening toolbox. Nmap, sqlmap, John, Hydra, TShark, Nikto, Aircrack-ng, Volatility 3, and Sleuth Kit are available here.'
 Write-Host 'Files in this folder\workspace are available inside the container at /workspace.'
 & docker compose --project-directory $setupDir -f $composeFile run --rm --no-deps msf sh
 if ($LASTEXITCODE -ne 0) { throw "Toolbox exited with code $LASTEXITCODE." }

@@ -1,10 +1,10 @@
 # Personal Metasploit toolkit for Windows
 
 This setup runs Metasploit Framework 6.5.5 and PostgreSQL in Docker Desktop.
-It includes Meterpreter payloads, Nmap, sqlmap, John the Ripper, THC-Hydra,
-and TShark (Wireshark's command-line analyzer). The Framework and database
-images, sqlmap revision, and added Alpine packages are pinned. Your database,
-Framework settings, modules, and shared files persist across launches.
+It includes Meterpreter payloads and a command-line toolbox for network, web,
+wireless capture-file, and forensic work. The Framework and database images,
+source revisions, Python packages, and added Alpine packages are pinned. Your
+database, Framework settings, modules, and shared files persist across launches.
 
 ## Launch with one double-click
 
@@ -37,6 +37,10 @@ The Docker build context excludes `.env` and your workspace files.
 | John the Ripper | Available as `john` inside `Toolbox.cmd`. Save input and results under `/workspace` if they need to persist. |
 | THC-Hydra | Available as `hydra` inside `Toolbox.cmd`. It runs only when you invoke it. |
 | TShark | Available as `tshark` inside `Toolbox.cmd` for packet-capture files in `/workspace`. Install the Windows Wireshark app separately for host capture and its Npcap driver. |
+| Nikto | Available as `nikto` inside `Toolbox.cmd` for authorized web-app checks. |
+| Aircrack-ng | Available as `aircrack-ng` inside `Toolbox.cmd` for existing wireless capture files in `/workspace`. Live monitor-mode capture is not provided by Docker Desktop. |
+| Volatility 3 | Available as `vol` inside `Toolbox.cmd` for memory images in `/workspace`. |
+| Sleuth Kit | Forensic commands such as `fls` and `mmls` are available inside `Toolbox.cmd` for disk images in `/workspace`. |
 
 To verify that Meterpreter is present without starting a session, run this in
 PowerShell after the first launch:
@@ -68,6 +72,14 @@ not claim to start them:
 | Greenbone/OpenVAS | An [independent multi-container scanner](https://greenbone.github.io/docs/latest/22.4/container/) with significant storage, memory, and feed-loading requirements. Metasploit has an OpenVAS plugin, but it needs an external scanner service. |
 | Sliver | A [separate C2 server](https://github.com/BishopFox/sliver/wiki/Getting-Started) with its own resources and operation configuration. It is not started here. |
 | Cobalt Strike | A [licensed product](https://www.cobaltstrike.com/product/quote-request); it cannot be bundled into this fork. |
+| Kismet | [Live Wi-Fi capture](https://www.kismetwireless.net/docs/readme/datasources/wifi-linux/) needs a compatible monitor-mode adapter and Linux access to it. Docker Desktop on Windows has [no direct USB passthrough](https://docs.docker.com/desktop/troubleshoot-and-support/faqs/general/), so this launcher does not promise a working Kismet capture service. |
+
+Docker Desktop is already the host runtime for this toolkit. For the cloud
+infrastructure part of your list, [Docker Desktop Kubernetes](https://docs.docker.com/desktop/use-desktop/kubernetes/)
+is an optional host feature, and [Terraform](https://developer.hashicorp.com/terraform/install)
+is a separate host CLI. Neither a Kubernetes cluster nor Terraform provider
+configuration is needed to run Metasploit, so the launch button does not
+create them or start infrastructure outside this local toolkit.
 
 The [Metasploit plugin guide](https://docs.metasploit.com/docs/using-metasploit/intermediate/how-to-use-plugins.html)
 lists sqlmap and OpenVAS plugins. Installing a CLI or starting this toolkit does

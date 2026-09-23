@@ -1,2 +1,4 @@
 *
 !Dockerfile
+!bin/
+!bin/nikto

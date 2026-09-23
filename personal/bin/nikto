@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /opt/nikto/program || exit 1
+exec perl ./nikto.pl "$@"
