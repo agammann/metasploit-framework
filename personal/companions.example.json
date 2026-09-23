@@ -1,9 +1,5 @@
 {
   "OpenToolbox": true,
-  "OpenWireshark": true,
-  "OpenBurpSuite": true,
   "OpenRustCveSniffer": true,
-  "WiresharkPath": "",
-  "BurpSuitePath": "",
   "RustCveSnifferPath": ""
 }
